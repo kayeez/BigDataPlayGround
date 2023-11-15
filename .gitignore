@@ -1,0 +1,7 @@
+/DataCrawler.iml
+/realtime-etl.iml
+/DataCrawler/node_modules/
+/DataCrawler/package-lock.json
+/realtime-etl/.gradle/
+/RestService/.gradle/
+/RestService/build/

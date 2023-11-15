@@ -1,0 +1,8 @@
+POST http://localhost:8888/kafka/send
+Content-Type: application/json
+
+{
+  "id": 999,
+  "value": "content"
+}
+

@@ -1,0 +1,11 @@
+{
+  "name": "DataCrawler",
+  "version": "1.0.0",
+  "scripts": {
+    "cypress:open": "cypress open"
+  },
+  "dependencies": {
+    "cypress": "^13.4.0",
+    "typescript": "^5.2.2"
+  }
+}
