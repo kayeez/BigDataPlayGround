@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+#  hue-instance:
+#    image: gethue/hue:latest
+#    hostname: hue
+#    container_name: hue
+#    dns: 8.8.8.8
+#    ports:
+#      - "9988:8888"
+#    volumes:
+#      - ./hue.ini:/usr/share/hue/desktop/conf/z-hue.ini
+#    depends_on:
+#      - "mysql-instance"
+  mysql-instance:
+    image: mysql
+    hostname: mysql
+    command: --init-file /data/application/init.sql
+    volumes:
+      - data:/var/lib/mysql
+      - ./init.sql:/data/application/init.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: hue
+volumes:
+  data:

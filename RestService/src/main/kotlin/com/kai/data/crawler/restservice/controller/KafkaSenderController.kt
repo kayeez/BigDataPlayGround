@@ -18,6 +18,7 @@ class KafkaSenderController {
 
     @PostMapping("send/{topic}")
     fun sendToKafka(@RequestBody data: Map<String, Any>, @PathVariable topic: String): Map<String, Any> {
+        print("send to kafka ${topic} ${data}")
         kafkaTemplate!!.send(topic, data)
         return mapOf("success" to true)
     }

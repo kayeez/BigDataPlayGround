@@ -9,3 +9,4 @@ class RestServiceApplication
 fun main(args: Array<String>) {
 	runApplication<RestServiceApplication>(*args)
 }
+

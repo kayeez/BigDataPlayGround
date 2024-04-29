@@ -3,15 +3,17 @@ version: '3'
 services:
   hbase:
     container_name: hbase
-    image: dajobe/hbase
+    image: harisekhon/hbase
+    hostname: localhost
     ports:
       - 19095:9095
       - 18085:8085
       - 16010:16010
+      - 22181:2181
     volumes:
-      - /opt/data/hbase-data:/data
+      - /opt/data/hbase-data:/hbase-data
   kafka-ui:
-    container_name: bigdata-ui
+    container_name: kafka-ui
     image: provectuslabs/kafka-ui:latest
     ports:
       - 8080:8080
@@ -21,7 +23,7 @@ services:
       - kafka-connect
     environment:
       KAFKA_CLUSTERS_0_NAME: kafka_0
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: bigdata:29092
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       KAFKA_CLUSTERS_0_METRICS_PORT: 9997
       KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schemaregistry:8085
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: first
@@ -29,46 +31,47 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.2.1
-    hostname: bigdata
-    container_name: bigdata
+    hostname: kafka
+    container_name: kafka
     ports:
       - "9092:9092"
       - "9997:9997"
     volumes:
-      - /opt/data/bigdata-data:/var/lib/bigdata/data
+      - /opt/data/kafka-data:/var/lib/kafka/data
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://bigdata:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_JMX_PORT: 9997
-      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=bigdata -Dcom.sun.management.jmxremote.rmi.port=9997
+      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka -Dcom.sun.management.jmxremote.rmi.port=9997
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@bigdata:29093'
-      KAFKA_LISTENERS: 'PLAINTEXT://bigdata:29092,CONTROLLER://bigdata:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
     command: [ "bash","-c","sed -i '/KAFKA_ZOOKEEPER_CONNECT/d' /etc/confluent/docker/configure && \
                       sed -i 's/cub zk-ready/echo ignore zk-ready/' /etc/confluent/docker/ensure && \ 
-                      echo \"bigdata-storage format --ignore-formatted -t $(bigdata-storage random-uuid) -c /etc/bigdata/bigdata.properties\" >> /etc/confluent/docker/ensure && \
+                      echo \"kafka-storage format --ignore-formatted -t $(kafka-storage random-uuid) -c /etc/kafka/kafka.properties\" >> /etc/confluent/docker/ensure && \
                       /etc/confluent/docker/run" ]
 
 
 
 
   schemaregistry:
+    container_name: schema-registry
     image: confluentinc/cp-schema-registry:7.2.1
     ports:
       - 8085:8085
     depends_on:
       - kafka
     environment:
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://bigdata:29092
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:29092
       SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
       SCHEMA_REGISTRY_HOST_NAME: schemaregistry
       SCHEMA_REGISTRY_LISTENERS: http://schemaregistry:8085
@@ -79,6 +82,7 @@ services:
 
 
   kafka-connect:
+    container_name: kafka-connect
     image: confluentinc/cp-kafka-connect:7.2.1
     ports:
       - 8083:8083
@@ -86,7 +90,7 @@ services:
       - kafka
       - schemaregistry
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: bigdata:29092
+      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
       CONNECT_GROUP_ID: compose-connect-group
       CONNECT_CONFIG_STORAGE_TOPIC: _connect_configs
       CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
@@ -94,11 +98,11 @@ services:
       CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_STATUS_STORAGE_TOPIC: _connect_status
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_KEY_CONVERTER: org.apache.bigdata.connect.storage.StringConverter
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry:8085
-      CONNECT_VALUE_CONVERTER: org.apache.bigdata.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry:8085
-      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.bigdata.connect.json.JsonConverter
-      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.bigdata.connect.json.JsonConverter
-      CONNECT_REST_ADVERTISED_HOST_NAME: bigdata-connect
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"

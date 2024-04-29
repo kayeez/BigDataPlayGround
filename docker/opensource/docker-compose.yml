@@ -1,0 +1,38 @@
+version: '3'
+services:
+  node1:
+    image: bigdata-os:1.0
+    hostname: node1
+    ports:
+      - 12181:2181
+      - 8088:8088
+      - 9000:9000
+      - 18042:8042
+      - 18888:18888
+      - 50070:50070
+      - 16000:16000
+      - 16010:16010
+      - 16020:16020
+      - 16030:16030
+    volumes:
+      - /opt/data/bigdata-install/:/opt/bigdata
+      - /opt/data/bigdata-data/node1/:/opt/data
+  node2:
+    image: bigdata-os:1.0
+    hostname: node2
+    ports:
+      - 22181:2181
+      - 28042:8042
+      - 9092:9092
+    volumes:
+      - /opt/data/bigdata-install/:/opt/bigdata
+      - /opt/data/bigdata-data/node2/:/opt/data
+  node3:
+    image: bigdata-os:1.0
+    hostname: node3
+    ports:
+      - 32181:2181
+      - 38042:8042
+    volumes:
+      - /opt/data/bigdata-install/:/opt/bigdata
+      - /opt/data/bigdata-data/node3/:/opt/data
